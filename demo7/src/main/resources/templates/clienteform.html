@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${add} ? 'Nuevo cliente' : 'Actualizar cliente'"></title>
+	<link rel="stylesheet" th:href="@{/css/styles.css}">
+  </head>
+  <body>
+    <h1 th:text="${add} ? 'Nuevo cliente' : 'Actualizar cliente'"></h1>
+    <br />
+    <br />
+    <form th:action="@{/clientes/save}" th:object="${clienteDTO}" method="post">
+      <table border="0">
+        <tr th:if="${clienteDTO.id}">
+          <td>id</td>
+          <td>:</td>
+          <td><input type="text" th:field="*{id}" readonly></td>
+        </tr>
+        <tr>
+          <td>Nombre</td>
+          <td>:</td>
+          <td><input type="text" th:field="*{nombre}"></td>
+        </tr>
+        <tr>
+          <td>Apellidos</td>
+          <td>:</td>
+          <td><input type="text" th:field="*{apellidos}"></td>
+        </tr>
+        <tr>
+          <td>NIF</td>
+          <td>:</td>
+          <td><input type="text" th:field="*{nif}"></td>
+        </tr>
+        <tr>
+          <td>Correo electrónico</td>
+          <td>:</td>
+          <td><input type="text" th:field="*{email}"></td>
+        </tr>
+        <tr>
+            <td>Clave de Seguridad</td>
+            <td>:</td>
+            <td><input type="text" th:field="*{claveSeguridad}"></td>
+        </tr>
+        <tr>
+ 			<td>Fecha Nacimiento</td>
+ 			<td>:</td>
+ 			<td> <input type="date" th:field="*{fechaNacimiento}" /> </td>
+ 		</tr> 
+        <tr>
+          <td>Recomendación</td>
+ 			<td>:</td>
+ 			<td><textarea th:field="*{recomendacionDTO.observaciones}" rows="4" cols="50"></textarea></td>
+        </tr>
+        
+        <!-- Ocultamos el id de la recomendacion del cliente -->
+ 		<input type="hidden" th:field="*{recomendacionDTO.id}">
+      
+      </table>
+      <input type="submit" th:value="${add} ? 'Nuevo' : 'Actualizar'" class="btn">
+    </form>
+    <br>
+    <a th:href="@{/clientes}" class="link">Volver a la lista de clientes</a>
+  </body>
+</html>

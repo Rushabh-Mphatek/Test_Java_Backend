@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${titulo}"></title>
+	<link rel="stylesheet" th:href="@{/css/styles.css}">
+  </head>
+  <body>
+    <h1 th:utext="${titulo}" />
+    <br />
+    <a th:href="@{/clientes}" class="btn">Gestión de Clientes</a>
+    <br />
+    <p th:utext="${nombreAsignatura}"></p>
+  </body>
+</html>
