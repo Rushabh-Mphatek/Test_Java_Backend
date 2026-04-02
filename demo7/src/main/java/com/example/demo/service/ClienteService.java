@@ -14,5 +14,4 @@ public interface ClienteService {
 	void delete(ClienteDTO clienteDTO);
 
 	List<ClienteDTO> findByApellidos(String apellidos);
-
 }
