@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+
+  demo7:
+    container_name: demo7-service
+    build:
+      context: ./demo7
+    image: demo7:latest
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_APPLICATION_NAME: demo7
+      JAVA_OPTS: "-Xmx512m -Xms256m"
+    networks:
+      - microservices-network
+
+  dn-springboot-demo:
+    container_name: dn-springboot-demo-service
+    build:
+      context: ./dn.springboot.demo
+    image: dn-springboot-demo:latest
+    ports:
+      - "8082:8080"
+    environment:
+      SPRING_APPLICATION_NAME: dn-springboot-demo
+      JAVA_OPTS: "-Xmx512m -Xms256m"
+    networks:
+      - microservices-network
+
+  javaguides:
+    container_name: javaguides-service
+    build:
+      context: ./javaguides
+    image: javaguides:latest
+    ports:
+      - "8083:8080"
+    environment:
+      SPRING_APPLICATION_NAME: javaguides
+      JAVA_OPTS: "-Xmx512m -Xms256m"
+    networks:
+      - microservices-network
+
+  springboot-restful-webservices:
+    container_name: springboot-restful-webservices-service
+    build:
+      context: ./springboot-restful-webservices
+    image: springboot-restful-webservices:latest
+    ports:
+      - "8084:8080"
+    environment:
+      SPRING_APPLICATION_NAME: springboot-restful-webservices
+      JAVA_OPTS: "-Xmx512m -Xms256m"
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge
