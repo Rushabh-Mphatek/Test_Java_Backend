@@ -1,61 +1,34 @@
 services:
 
   demo7:
-    container_name: demo7-service
     build:
       context: ./demo7
+      dockerfile: Dockerfile
     image: demo7:latest
+    container_name: demo7-service
     ports:
       - "8081:8080"
-    environment:
-      SPRING_APPLICATION_NAME: demo7
-      JAVA_OPTS: "-XX:+UseContainerSupport -Xmx512m -Xms256m"
-    restart: unless-stopped
-    networks:
-      - microservices-network
 
   dn-springboot-demo:
-    container_name: dn-springboot-demo-service
     build:
       context: ./dn.springboot.demo
     image: dn-springboot-demo:latest
+    container_name: dn-springboot-demo-service
     ports:
       - "8082:8080"
-    environment:
-      SPRING_APPLICATION_NAME: dn-springboot-demo
-      JAVA_OPTS: "-XX:+UseContainerSupport -Xmx512m -Xms256m"
-    restart: unless-stopped
-    networks:
-      - microservices-network
 
   javaguides:
-    container_name: javaguides-service
     build:
       context: ./javaguides
     image: javaguides:latest
+    container_name: javaguides-service
     ports:
       - "8083:8080"
-    environment:
-      SPRING_APPLICATION_NAME: javaguides
-      JAVA_OPTS: "-XX:+UseContainerSupport -Xmx512m -Xms256m"
-    restart: unless-stopped
-    networks:
-      - microservices-network
 
   springboot-restful-webservices:
-    container_name: springboot-restful-webservices-service
     build:
       context: ./springboot-restful-webservices
     image: springboot-restful-webservices:latest
+    container_name: springboot-restful-webservices-service
     ports:
       - "8084:8080"
-    environment:
-      SPRING_APPLICATION_NAME: springboot-restful-webservices
-      JAVA_OPTS: "-XX:+UseContainerSupport -Xmx512m -Xms256m"
-    restart: unless-stopped
-    networks:
-      - microservices-network
-
-networks:
-  microservices-network:
-    driver: bridge
