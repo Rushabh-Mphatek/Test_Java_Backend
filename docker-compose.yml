@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   demo7:
@@ -11,7 +9,8 @@ services:
       - "8081:8080"
     environment:
       SPRING_APPLICATION_NAME: demo7
-      JAVA_OPTS: "-Xmx512m -Xms256m"
+      JAVA_OPTS: "-XX:+UseContainerSupport -Xmx512m -Xms256m"
+    restart: unless-stopped
     networks:
       - microservices-network
 
@@ -24,7 +23,8 @@ services:
       - "8082:8080"
     environment:
       SPRING_APPLICATION_NAME: dn-springboot-demo
-      JAVA_OPTS: "-Xmx512m -Xms256m"
+      JAVA_OPTS: "-XX:+UseContainerSupport -Xmx512m -Xms256m"
+    restart: unless-stopped
     networks:
       - microservices-network
 
@@ -37,7 +37,8 @@ services:
       - "8083:8080"
     environment:
       SPRING_APPLICATION_NAME: javaguides
-      JAVA_OPTS: "-Xmx512m -Xms256m"
+      JAVA_OPTS: "-XX:+UseContainerSupport -Xmx512m -Xms256m"
+    restart: unless-stopped
     networks:
       - microservices-network
 
@@ -50,7 +51,8 @@ services:
       - "8084:8080"
     environment:
       SPRING_APPLICATION_NAME: springboot-restful-webservices
-      JAVA_OPTS: "-Xmx512m -Xms256m"
+      JAVA_OPTS: "-XX:+UseContainerSupport -Xmx512m -Xms256m"
+    restart: unless-stopped
     networks:
       - microservices-network
 
