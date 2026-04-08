@@ -1,0 +1,45 @@
+services:
+
+  demo7:
+    image: eclipse-temurin:17-jdk-jammy
+    container_name: demo7-service
+    working_dir: /app
+    volumes:
+      - /home/Rushabh/Target/demo7:/app
+    command: ["java", "-jar", "app.jar"]
+    ports:
+      - "8081:8080"
+    restart: always
+
+  dn.springboot.demo:
+    image: eclipse-temurin:17-jdk-jammy
+    container_name: dn.springboot.demo-service
+    working_dir: /app
+    volumes:
+      - /home/Rushabh/Target/dn.springboot.demo:/app
+    command: ["java", "-jar", "app.jar"]
+    ports:
+      - "8082:8080"
+    restart: always
+
+  javaguides:
+    image: eclipse-temurin:17-jdk-jammy
+    container_name: javaguides-service
+    working_dir: /app
+    volumes:
+      - /home/Rushabh/Target/javaguides:/app
+    command: ["java", "-jar", "app.jar"]
+    ports:
+      - "8083:8080"
+    restart: always
+
+  springboot-restful-webservices:
+    image: eclipse-temurin:17-jdk-jammy
+    container_name: springboot-restful-webservices-service
+    working_dir: /app
+    volumes:
+      - /home/Rushabh/Target/springboot-restful-webservices:/app
+    command: ["java", "-jar", "app.jar"]
+    ports:
+      - "8084:8080"
+    restart: always
