@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+
+  demo7:
+    build:
+      context: ./demo7
+    image: demo7:latest
+    container_name: demo7-service
+    ports:
+      - "8081:8080"
+    restart: always
+    depends_on:
+      - redis
+      - rabbitmq
+
+  dn.springboot.demo:
+    build:
+      context: ./dn.springboot.demo
+    image: dn.springboot.demo:latest
+    container_name: dn.springboot.demo-service
+    ports:
+      - "8082:8080"
+    restart: always
+    depends_on:
+      - redis
+      - rabbitmq
+
+  javaguides:
+    build:
+      context: ./javaguides
+    image: javaguides:latest
+    container_name: javaguides-service
+    ports:
+      - "8083:8080"
+    restart: always
+
+  springboot-restful-webservices:
+    build:
+      context: ./springboot-restful-webservices
+    image: springboot-restful-webservices:latest
+    container_name: springboot-restful-webservices-service
+    ports:
+      - "8084:8080"
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-service
+    restart: always
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-service
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
