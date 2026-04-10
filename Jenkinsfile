@@ -3,24 +3,22 @@ pipeline {
 
     environment {
         BASE_DIR = '/home/Rushabh/Test_Java_Backend'
+        DOCKER_COMPOSE_FILE = 'stage1-docker-compose.yml'
     }
 
     stages {
 
-        // ✅ 1. Initialize & Detect Branch (SAFE)
+        // 🔷 1. Initialize & Branch Setup
         stage('Initialize & Detect Branch') {
             steps {
                 script {
 
-                    // Jenkins provides BRANCH_NAME in multibranch
                     env.BRANCH_NAME = env.BRANCH_NAME ?: "main"
 
-                    // Sanitize branch name
                     env.SAFE_BRANCH_NAME = env.BRANCH_NAME
                         .replaceAll('[^a-zA-Z0-9._-]', '-')
                         .toLowerCase()
 
-                    // Dynamic paths (SAFE now)
                     env.COMMIT_FILE = "/home/Rushabh/last_successful_commit_${env.SAFE_BRANCH_NAME}.txt"
                     env.TARGET_DIR = "/home/Rushabh/Target/${env.SAFE_BRANCH_NAME}"
                     env.COMPOSE_PROJECT_NAME = "backend-stage1-${env.SAFE_BRANCH_NAME}"
@@ -34,41 +32,34 @@ pipeline {
                     Commit File       : ${env.COMMIT_FILE}
                     Target Directory  : ${env.TARGET_DIR}
                     Docker Project    : ${env.COMPOSE_PROJECT_NAME}
-                    Build Number      : ${env.BUILD_NUMBER}
                     ════════════════════════════════════════════
                     """
                 }
             }
         }
 
-        // ✅ 2. Checkout Code (CRITICAL FIX)
+        // 🔷 2. Checkout Code
         stage('Checkout Code') {
             steps {
                 script {
                     dir("${BASE_DIR}") {
 
-                        // Clean previous repo (important for branch switching)
                         sh """
                             if [ -d .git ]; then
-                                echo "🧹 Cleaning existing repo"
                                 git reset --hard
                                 git clean -fd
                             else
-                                echo "📥 Fresh clone"
                                 cd ..
                                 rm -rf Test_Java_Backend
                                 git clone <YOUR_REPO_URL> Test_Java_Backend
                             fi
                         """
 
-                        // 🔥 Correct branch checkout
                         sh """
                             git fetch --all --prune
                             git checkout ${env.BRANCH_NAME} || git checkout -b ${env.BRANCH_NAME} origin/${env.BRANCH_NAME}
                             git reset --hard origin/${env.BRANCH_NAME}
                         """
-
-                        echo "✅ Checked out branch: ${env.BRANCH_NAME}"
 
                         sh "git log -1 --oneline"
                     }
@@ -76,30 +67,20 @@ pipeline {
             }
         }
 
-        // ✅ 3. Detect Changed Services
+        // 🔷 3. Detect Changed Services
         stage('Detect Changed Services') {
             steps {
                 script {
                     dir("${BASE_DIR}") {
 
-                        def currCommit = sh(
-                            script: "git rev-parse HEAD",
-                            returnStdout: true
-                        ).trim()
-
-                        def prevCommit = fileExists(env.COMMIT_FILE) ?
-                            readFile(env.COMMIT_FILE).trim() : ""
+                        def currCommit = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+                        def prevCommit = fileExists(env.COMMIT_FILE) ? readFile(env.COMMIT_FILE).trim() : ""
 
                         def changedFiles = ""
 
                         if (!prevCommit) {
-                            echo "🆕 FIRST BUILD for ${env.BRANCH_NAME}"
                             changedFiles = "FIRST_BUILD"
                         } else {
-                            echo "📊 Comparing commits:"
-                            echo "   Previous: ${prevCommit}"
-                            echo "   Current:  ${currCommit}"
-
                             changedFiles = sh(
                                 script: "git diff --name-only ${prevCommit} ${currCommit}",
                                 returnStdout: true
@@ -116,7 +97,6 @@ pipeline {
                         if (changedFiles == "FIRST_BUILD") {
                             changedServices = allServices
                         } else if (changedFiles) {
-
                             def services = changedFiles
                                 .split("\n")
                                 .collect { it.tokenize('/')[0] }
@@ -127,51 +107,33 @@ pipeline {
                                     changedServices.add(svc)
                                 }
                             }
-                        } else {
-                            echo "⚠️  No file changes detected"
                         }
 
                         env.CHANGED_SERVICES = changedServices.join(",")
-
                         env.ALL_SERVICES_CHANGED =
                             (changedServices.size() == allServices.size()) ? "true" : "false"
 
-                        echo """
-                        📊 Detection Results:
-                        ─────────────────────────────────────────
-                        Changed Services: ${env.CHANGED_SERVICES ?: 'NONE'}
-                        All Changed:      ${env.ALL_SERVICES_CHANGED}
-                        Service Count:    ${changedServices.size()} / ${allServices.size()}
-                        ─────────────────────────────────────────
-                        """
-
-                        // Save commit
                         writeFile file: env.COMMIT_FILE, text: currCommit
+
+                        echo "Changed: ${env.CHANGED_SERVICES}"
                     }
                 }
             }
         }
 
-        // ✅ 4. Build Changed Services
+        // 🔷 4. Build Services
         stage('Build Changed Services') {
             steps {
                 script {
 
-                    if (!env.CHANGED_SERVICES?.trim()) {
-                        echo "⏭️  No services to build"
-                        return
-                    }
+                    if (!env.CHANGED_SERVICES?.trim()) return
 
                     def services = env.CHANGED_SERVICES.tokenize(',')
 
                     for (svc in services) {
                         dir("${BASE_DIR}/${svc}") {
-
-                            echo "🔨 Building: ${svc}"
-
                             sh """
                                 rm -rf target
-
                                 if [ -f mvnw ]; then
                                     chmod +x mvnw
                                     ./mvnw clean package -DskipTests
@@ -185,14 +147,12 @@ pipeline {
             }
         }
 
-        // ✅ 5. Backup & Move JAR
+        // 🔷 5. Move JAR
         stage('Backup & Move JAR') {
             steps {
                 script {
 
-                    if (!env.CHANGED_SERVICES?.trim()) {
-                        return
-                    }
+                    if (!env.CHANGED_SERVICES?.trim()) return
 
                     def services = env.CHANGED_SERVICES.tokenize(',')
 
@@ -206,22 +166,131 @@ pipeline {
 
                             NEW_JAR=\$(ls ${sourcePath}/*.jar | grep -v 'original' | head -n 1)
 
-                            if [ -z "\$NEW_JAR" ]; then
-                                echo "❌ No JAR found for ${svc}"
-                                exit 1
-                            fi
-
-                            EXISTING_JAR=\$(ls ${destinationPath}/*.jar 2>/dev/null | grep -v '_' | head -n 1 || true)
-
-                            if [ ! -z "\$EXISTING_JAR" ]; then
-                                TIMESTAMP=\$(date +"%d-%m-%Y_%I-%M-%S_%p")
-                                BASENAME=\$(basename "\$EXISTING_JAR" .jar)
-                                mv "\$EXISTING_JAR" "${destinationPath}/\${BASENAME}_\${TIMESTAMP}.jar"
-                            fi
+                            if [ -z "\$NEW_JAR" ]; then exit 1; fi
 
                             cp -f "\$NEW_JAR" "${destinationPath}/"
-                            echo "✅ Deployed ${svc}"
                         """
+                    }
+                }
+            }
+        }
+
+        // 🔷 6. Docker Cleanup
+        stage('Docker Cleanup') {
+            when {
+                expression { env.ALL_SERVICES_CHANGED == "true" }
+            }
+            steps {
+                dir("${BASE_DIR}") {
+                    sh """
+                        docker compose -p ${COMPOSE_PROJECT_NAME} -f ${DOCKER_COMPOSE_FILE} down --remove-orphans || true
+                        docker image prune -f --filter "until=24h" || true
+                    """
+                }
+            }
+        }
+
+        // 🔷 7. Load Base Images
+        stage('Load Base Images') {
+            steps {
+                sh """
+                    if [ -f /home/Rushabh/docker-base-images/base-images.tar ]; then
+                        docker load -i /home/Rushabh/docker-base-images/base-images.tar
+                    else
+                        exit 1
+                    fi
+                """
+            }
+        }
+
+        // 🔷 8. Prepare JAR for Docker
+        stage('Prepare JAR for Docker') {
+            steps {
+                script {
+
+                    if (!env.CHANGED_SERVICES?.trim()) return
+
+                    def services = env.CHANGED_SERVICES.tokenize(',')
+
+                    for (svc in services) {
+                        sh """
+                            JAR_FILE=\$(ls ${env.TARGET_DIR}/${svc}/*.jar | head -n 1)
+                            cp "\$JAR_FILE" ${BASE_DIR}/${svc}/app.jar
+                        """
+                    }
+                }
+            }
+        }
+
+        // 🔷 9. Full Deploy
+        stage('Docker Full Deploy') {
+            when {
+                expression { env.ALL_SERVICES_CHANGED == "true" }
+            }
+            steps {
+                dir("${BASE_DIR}") {
+                    sh """
+						docker compose -f ${DOCKER_COMPOSE_FILE} down || true
+                        docker compose -f ${DOCKER_COMPOSE_FILE} build --no-cache
+                        docker compose -f ${DOCKER_COMPOSE_FILE} up -d
+                    """
+                }
+            }
+        }
+
+        // 🔷 10. Partial Deploy
+        stage('Docker Partial Deploy') {
+            when {
+                expression { env.ALL_SERVICES_CHANGED != "true" }
+            }
+            steps {
+                script {
+
+                    def services = env.CHANGED_SERVICES.tokenize(',')
+                    def parallelDeploy = [:]
+
+                    for (svc in services) {
+                        parallelDeploy["Deploy-${svc}"] = {
+                            dir("${BASE_DIR}") {
+                                sh """
+                                    docker compose -f ${DOCKER_COMPOSE_FILE} up -d --no-deps --build ${svc}
+                                """
+                            }
+                        }
+                    }
+
+                    parallel parallelDeploy
+                }
+            }
+        }
+
+        // 🔷 11. Cleanup app.jar
+        stage('Cleanup app.jar') {
+			steps {
+				script {
+					if (!env.CHANGED_SERVICES?.trim()) return
+
+					env.CHANGED_SERVICES.tokenize(',').each { svc ->
+						sh "rm -f ${BASE_DIR}/${svc}/app.jar || true"
+					}
+				}
+			}
+		}
+
+        // 🔷 12. Summary
+        stage('Final Summary') {
+            steps {
+                script {
+                    if (!env.CHANGED_SERVICES?.trim()) return
+
+                    env.CHANGED_SERVICES.tokenize(',').each { svc ->
+
+                        def status = sh(
+                            script: "docker ps -a --filter name=${svc} --format '{{.Status}}' || true",
+                            returnStdout: true
+                        ).trim()
+
+                        echo "Service: ${svc} → ${status}"
                     }
                 }
             }
@@ -230,10 +299,10 @@ pipeline {
 
     post {
         success {
-            echo "🎉 SUCCESS: ${env.BRANCH_NAME} deployed successfully"
+            echo "🎉 SUCCESS: ${env.BRANCH_NAME} deployed"
         }
         failure {
-            echo "❌ FAILURE: Check logs"
+            echo "❌ FAILURE"
         }
     }
 }
